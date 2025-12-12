@@ -5,12 +5,20 @@ from flask import abort, current_app, render_template
 from flask_login import current_user, login_required
 
 from ..models import Script
+from ..organizations.utils import get_active_organization
 from . import prompter_bp
 
 
 def _ensure_access(script: Script) -> None:
-    if script.owner_id != current_user.id and not script.is_shared:
-        abort(403)
+    if not current_user.can_access_script(script):
+        abort(404)
+
+    active_org = get_active_organization()
+    if active_org:
+        if script.organization_id != active_org.id:
+            abort(404)
+    elif script.organization_id is not None:
+        abort(404)
 
 
 @prompter_bp.route("/prompter/<int:script_id>")

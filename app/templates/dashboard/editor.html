@@ -4,6 +4,9 @@
 <section class="layout-two">
     <div class="layout-main">
         <h1>{{ 'Edit script' if script else 'Create script' }}</h1>
+        {% if active_organization %}
+            <p class="muted">This script lives in {{ active_organization.name }} and members can collaborate.</p>
+        {% endif %}
         <form method="post" novalidate>
             {{ form.hidden_tag() }}
             <label>{{ form.title.label }} {{ form.title(size=48, autofocus=True) }}</label>

@@ -17,9 +17,9 @@ class NextcloudService:
     def __init__(self, user) -> None:
         self.user = user
         config = current_app.config
-        self.base_url = (config.get("NEXTCLOUD_BASE_URL") or "").rstrip("/")
-        self.username = config.get("NEXTCLOUD_USERNAME") or user.email
-        self.app_password = config.get("NEXTCLOUD_APP_PASSWORD")
+        self.base_url = (user.nextcloud_base_url or config.get("NEXTCLOUD_BASE_URL") or "").rstrip("/")
+        self.username = user.nextcloud_username or config.get("NEXTCLOUD_USERNAME") or user.email
+        self.app_password = user.nextcloud_app_password or config.get("NEXTCLOUD_APP_PASSWORD")
         if not all([self.base_url, self.username, self.app_password]):
             raise RuntimeError("Nextcloud credentials not configured.")
 

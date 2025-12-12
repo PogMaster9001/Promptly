@@ -7,15 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     {% block head_extra %}{% endblock %}
 </head>
-<body class="theme-light">
+<body class="theme-{{ active_theme }}">
 <nav class="top-nav">
     <div class="brand">Promptly</div>
+    {% if current_user.is_authenticated %}
+        <div class="nav-organization">
+            <a class="org-switch" href="{{ url_for('organizations.index') }}">
+                {% if active_organization %}
+                    {{ active_organization.name }}
+                {% else %}
+                    Choose organization
+                {% endif %}
+            </a>
+        </div>
+    {% endif %}
     <div class="nav-links">
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
+            <a href="{{ url_for('organizations.index') }}">Organizations</a>
+            <a href="{{ url_for('settings.index') }}">Settings</a>
             <a href="{{ url_for('auth.logout') }}">Sign out</a>
         {% else %}
             <a href="{{ url_for('auth.login') }}">Sign in</a>

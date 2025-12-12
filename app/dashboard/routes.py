@@ -7,15 +7,30 @@ from flask_login import current_user, login_required
 from ..extensions import db
 from ..forms import ImportScriptForm, ScriptForm
 from ..models import RemoteControlSession, Script
+from ..organizations.utils import get_active_organization
 from ..services.google_drive import GoogleDriveService
 from ..services.nextcloud import NextcloudService
 from . import dashboard_bp
 
 
-def _load_script(script_id: int) -> Script:
-    script = Script.query.filter_by(id=script_id, owner_id=current_user.id).first()
-    if not script:
+def _load_script(script_id: int, *, require_edit: bool = False) -> Script:
+    script = Script.query.get_or_404(script_id)
+
+    if not current_user.can_access_script(script):
         abort(404)
+
+    active_org = get_active_organization()
+    if active_org:
+        if script.organization_id != active_org.id:
+            abort(404)
+    else:
+        if script.organization_id is not None:
+            abort(404)
+
+    if require_edit and script.owner_id != current_user.id:
+        if not script.organization_id or not current_user.is_org_admin(script.organization_id):
+            abort(403)
+
     return script
 
 
@@ -29,19 +44,51 @@ def _update_script_settings(script: Script, form: ScriptForm) -> None:
 @dashboard_bp.route("/")
 @login_required
 def index():
-    scripts = Script.query.filter_by(owner_id=current_user.id).order_by(Script.updated_at.desc())
-    return render_template("dashboard/index.html", scripts=scripts)
+    active_org = get_active_organization()
+    if active_org:
+        scripts = (
+            Script.query.filter_by(organization_id=active_org.id)
+            .order_by(Script.updated_at.desc())
+            .all()
+        )
+    else:
+        scripts = (
+            Script.query.filter_by(owner_id=current_user.id, organization_id=None)
+            .order_by(Script.updated_at.desc())
+            .all()
+        )
+
+    editable_script_ids = {
+        script.id
+        for script in scripts
+        if script.owner_id == current_user.id
+        or (script.organization_id and current_user.is_org_admin(script.organization_id))
+    }
+
+    return render_template(
+        "dashboard/index.html",
+        scripts=scripts,
+        active_org=active_org,
+        editable_script_ids=editable_script_ids,
+    )
 
 
 @dashboard_bp.route("/scripts/new", methods=["GET", "POST"])
 @login_required
 def create_script():
     form = ScriptForm()
+    if not form.is_submitted():
+        default_theme = current_user.theme_preference if current_user.is_authenticated else None
+        default_theme = default_theme or current_app.config.get("DEFAULT_THEME", "light")
+        if default_theme in dict(form.theme.choices):
+            form.theme.data = default_theme
     if form.validate_on_submit():
+        active_org = get_active_organization()
         script = Script(
             title=form.title.data,
             content=form.content.data,
             owner_id=current_user.id,
+            organization_id=active_org.id if active_org else None,
             scroll_speed=float(form.scroll_speed.data or current_app.config["DEFAULT_SCROLL_SPEED"]),
             theme=form.theme.data,
         )
@@ -56,7 +103,7 @@ def create_script():
 @dashboard_bp.route("/scripts/<int:script_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_script(script_id: int):
-    script = _load_script(script_id)
+    script = _load_script(script_id, require_edit=True)
     form = ScriptForm(obj=script)
     if form.validate_on_submit():
         _update_script_settings(script, form)
@@ -70,7 +117,7 @@ def edit_script(script_id: int):
 @dashboard_bp.route("/scripts/<int:script_id>/delete", methods=["POST"])
 @login_required
 def delete_script(script_id: int):
-    script = _load_script(script_id)
+    script = _load_script(script_id, require_edit=True)
     db.session.delete(script)
     db.session.commit()
     flash("Script removed.", "info")
@@ -93,10 +140,12 @@ def import_script():
                 service = NextcloudService(current_user)
 
             imported = service.fetch_script(resource_id, convert_to_plaintext=convert)
+            active_org = get_active_organization()
             script = Script(
                 title=imported.title,
                 content=imported.content,
                 owner_id=current_user.id,
+                organization_id=active_org.id if active_org else None,
                 source=provider,
                 source_identifier=resource_id,
                 scroll_speed=current_app.config["DEFAULT_SCROLL_SPEED"],
@@ -116,7 +165,7 @@ def import_script():
 @dashboard_bp.route("/scripts/<int:script_id>/remote", methods=["POST"])
 @login_required
 def create_remote_session(script_id: int):
-    script = _load_script(script_id)
+    script = _load_script(script_id, require_edit=True)
     if script.control_session and script.control_session.is_active:
         flash("Remote session already active.", "info")
         return redirect(url_for("dashboard.index"))

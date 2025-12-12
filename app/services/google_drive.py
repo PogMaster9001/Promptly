@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import io
-from typing import Any
-
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -13,6 +11,7 @@ from markupsafe import Markup
 from werkzeug.utils import secure_filename
 
 from . import ImportedScript
+from ..extensions import db
 
 
 class GoogleDriveService:
@@ -20,6 +19,7 @@ class GoogleDriveService:
 
     def __init__(self, user) -> None:
         self.user = user
+        self._integration = None
         self.credentials = self._load_user_credentials()
 
     def _load_user_credentials(self) -> Credentials:
@@ -29,7 +29,13 @@ class GoogleDriveService:
         The token should have Drive read-only scopes. Raise a RuntimeError if the
         credentials cannot be found so the caller can surface the issue to the user.
         """
-        raise RuntimeError("Google Drive credentials not configured for this account.")
+        integration = self.user.get_integration("google_drive") if self.user else None
+        if not integration:
+            raise RuntimeError("Google Drive credentials not configured for this account.")
+
+        self._integration = integration
+        credentials = integration.as_credentials()
+        return credentials
 
     def fetch_script(self, file_id: str, *, convert_to_plaintext: bool = True) -> ImportedScript:
         if not self.credentials:
@@ -37,6 +43,10 @@ class GoogleDriveService:
 
         if self.credentials.expired and self.credentials.refresh_token:
             self.credentials.refresh(Request())
+            if self._integration:
+                self._integration.update_from_credentials(self.credentials)
+                db.session.add(self._integration)
+                db.session.commit()
 
         try:
             service = build("drive", "v3", credentials=self.credentials, cache_discovery=False)

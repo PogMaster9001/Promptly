@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Organizations · Promptly{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>Organizations</h1>
+        <p class="muted">Switch workspaces, invite teammates, and create new orgs.</p>
+    </div>
+</section>
+
+<section class="layout-two">
+    <div class="layout-main">
+        <article class="card">
+            <header class="card-header">
+                <h2>Active workspace</h2>
+            </header>
+            <div class="card-body">
+                {% if active_org %}
+                    <p>You are working inside <strong>{{ active_org.name }}</strong>. Scripts you create or import here are visible to every member.</p>
+                    <form method="post" action="{{ url_for('organizations.switch_personal', next=url_for('organizations.index')) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn" type="submit">Switch to personal workspace</button>
+                    </form>
+                {% else %}
+                    <p>You are working in your personal workspace. Only you can see the scripts you create here.</p>
+                {% endif %}
+            </div>
+        </article>
+
+        <article class="card">
+            <header class="card-header">
+                <h2>Your organizations</h2>
+            </header>
+            <div class="card-body">
+                {% if memberships %}
+                    <ul class="list">
+                        {% for membership in memberships %}
+                            <li class="list-item">
+                                <div>
+                                    <strong>{{ membership.organization.name }}</strong>
+                                    <span class="badge">{{ membership.role|capitalize }}</span>
+                                </div>
+                                <form method="post" action="{{ url_for('organizations.switch', org_id=membership.organization.id, next=url_for('organizations.index')) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn {% if active_org and active_org.id == membership.organization.id %}primary{% endif %}" type="submit">
+                                        {% if active_org and active_org.id == membership.organization.id %}
+                                            Active
+                                        {% else %}
+                                            Switch
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="muted">Join or create your first organization to collaborate with others.</p>
+                {% endif %}
+            </div>
+        </article>
+
+        {% if active_org and active_invites %}
+            <article class="card">
+                <header class="card-header">
+                    <h2>Active invite links</h2>
+                </header>
+                <div class="card-body">
+                    <ul class="list">
+                        {% for invite in active_invites %}
+                            <li class="list-item">
+                                <div>
+                                    <code>{{ invite.code }}</code>
+                                    <span class="badge">{{ invite.role|capitalize }}</span>
+                                </div>
+                                <form method="post" action="{{ url_for('organizations.revoke_invite', org_id=invite.organization_id, invite_id=invite.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn" type="submit">Revoke</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </article>
+        {% endif %}
+    </div>
+
+    <aside class="layout-side">
+        <article class="card">
+            <header class="card-header">
+                <h2>Create an organization</h2>
+            </header>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {{ create_form.hidden_tag() }}
+                    <label>{{ create_form.name.label }} {{ create_form.name(size=32) }}</label>
+                    {% if create_form.name.errors %}<div class="field-error">{{ create_form.name.errors[0] }}</div>{% endif %}
+                    {{ create_form.create_submit(class_="btn primary") }}
+                </form>
+            </div>
+        </article>
+
+        <article class="card">
+            <header class="card-header">
+                <h2>Join with a code</h2>
+            </header>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {{ join_form.hidden_tag() }}
+                    <label>{{ join_form.code.label }} {{ join_form.code(size=32) }}</label>
+                    {% if join_form.code.errors %}<div class="field-error">{{ join_form.code.errors[0] }}</div>{% endif %}
+                    {{ join_form.join_submit(class_="btn") }}
+                </form>
+            </div>
+        </article>
+
+        {% if active_org and current_user.is_org_admin(active_org) %}
+            <article class="card">
+                <header class="card-header">
+                    <h2>Invite teammates</h2>
+                </header>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('organizations.create_invite', org_id=active_org.id) }}" novalidate>
+                        {{ invite_form.hidden_tag() }}
+                        <label>{{ invite_form.role.label }} {{ invite_form.role() }}</label>
+                        {{ invite_form.invite_submit(class_="btn") }}
+                    </form>
+                </div>
+            </article>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}

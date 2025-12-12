@@ -3,8 +3,20 @@
 {% block content %}
 <section class="page-header">
     <div>
-        <h1>Your scripts</h1>
-        <p class="muted">Pull from Drive or Nextcloud, or craft something new.</p>
+        <h1>
+            {% if active_org %}
+                {{ active_org.name }} scripts
+            {% else %}
+                Your scripts
+            {% endif %}
+        </h1>
+        <p class="muted">
+            {% if active_org %}
+                Everyone in {{ active_org.name }} can edit scripts created here.
+            {% else %}
+                Pull from Drive or Nextcloud, or craft something new just for you.
+            {% endif %}
+        </p>
     </div>
     <div class="actions">
         <a class="btn" href="{{ url_for('dashboard.import_script') }}">Import</a>
@@ -22,19 +34,27 @@
             <p class="muted">Updated {{ script.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
             <div class="card-actions">
                 <a class="btn" href="{{ url_for('prompter.view', script_id=script.id) }}">Open prompter</a>
-                <a class="btn" href="{{ url_for('dashboard.edit_script', script_id=script.id) }}">Edit</a>
-                <form method="post" action="{{ url_for('dashboard.delete_script', script_id=script.id) }}" onsubmit="return confirm('Delete this script?');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn danger" type="submit">Delete</button>
-                </form>
-                <form method="post" action="{{ url_for('dashboard.create_remote_session', script_id=script.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="btn" type="submit">Remote control</button>
-                </form>
+                {% if script.id in editable_script_ids %}
+                    <a class="btn" href="{{ url_for('dashboard.edit_script', script_id=script.id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('dashboard.delete_script', script_id=script.id) }}" onsubmit="return confirm('Delete this script?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn danger" type="submit">Delete</button>
+                    </form>
+                    <form method="post" action="{{ url_for('dashboard.create_remote_session', script_id=script.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn" type="submit">Remote control</button>
+                    </form>
+                {% endif %}
             </div>
         </article>
     {% else %}
-        <p class="empty">No scripts yet. Import or create one to get started.</p>
+        <p class="empty">
+            {% if active_org %}
+                No scripts in {{ active_org.name }} yet. Create one to get the team rolling.
+            {% else %}
+                No scripts yet. Import or create one to get started.
+            {% endif %}
+        </p>
     {% endfor %}
 </section>
 {% endblock %}

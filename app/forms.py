@@ -2,7 +2,15 @@
 from __future__ import annotations
 
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, DecimalField, PasswordField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms import (
+    BooleanField,
+    DecimalField,
+    PasswordField,
+    SelectField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+)
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, Optional
 
 
@@ -50,3 +58,39 @@ class ImportScriptForm(FlaskForm):
     resource_id = StringField("Resource identifier", validators=[DataRequired(), Length(max=255)])
     convert_to_plaintext = BooleanField("Convert rich formatting to teleprompter-friendly markup", default=True)
     submit = SubmitField("Import")
+
+
+class ThemeSettingsForm(FlaskForm):
+    theme = SelectField(
+        "Application theme",
+        choices=[("light", "Light"), ("dark", "Dark"), ("system", "Match system")],
+        default="light",
+    )
+    theme_submit = SubmitField("Save appearance")
+
+
+class NextcloudSettingsForm(FlaskForm):
+    base_url = StringField("Instance URL", validators=[Optional(), Length(max=255)])
+    username = StringField("Username", validators=[Optional(), Length(max=255)])
+    app_password = PasswordField("App password", validators=[Optional(), Length(max=255)])
+    nextcloud_submit = SubmitField("Save Nextcloud settings")
+    nextcloud_disconnect = SubmitField("Disconnect Nextcloud")
+
+
+class OrganizationCreateForm(FlaskForm):
+    name = StringField("Organization name", validators=[DataRequired(), Length(max=120)])
+    create_submit = SubmitField("Create organization")
+
+
+class OrganizationJoinForm(FlaskForm):
+    code = StringField("Invite code", validators=[DataRequired(), Length(max=64)])
+    join_submit = SubmitField("Join organization")
+
+
+class OrganizationInviteForm(FlaskForm):
+    role = SelectField(
+        "Default role",
+        choices=[("member", "Member"), ("admin", "Admin")],
+        default="member",
+    )
+    invite_submit = SubmitField("Generate invite link")
