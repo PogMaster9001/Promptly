@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Import script · Promptly{% endblock %}
+{% block content %}
+<section class="card">
+    <h1>Import from cloud</h1>
+    <p class="muted">Provide a Google Drive file ID or the path inside Nextcloud. Ensure integrations are authorized in your user settings.</p>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <label>{{ form.provider.label }} {{ form.provider() }}</label>
+        <label>{{ form.resource_id.label }} {{ form.resource_id(size=48, autofocus=True, placeholder='drive file id or nextcloud path') }}</label>
+        {% if form.resource_id.errors %}<div class="field-error">{{ form.resource_id.errors[0] }}</div>{% endif %}
+
+        <label class="checkbox">{{ form.convert_to_plaintext() }} {{ form.convert_to_plaintext.label.text }}</label>
+
+        {{ form.submit(class_="btn primary") }}
+    </form>
+</section>
+{% endblock %}

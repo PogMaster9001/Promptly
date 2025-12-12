@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if script else 'New' }} script · Promptly{% endblock %}
+{% block content %}
+<section class="layout-two">
+    <div class="layout-main">
+        <h1>{{ 'Edit script' if script else 'Create script' }}</h1>
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <label>{{ form.title.label }} {{ form.title(size=48, autofocus=True) }}</label>
+            {% if form.title.errors %}<div class="field-error">{{ form.title.errors[0] }}</div>{% endif %}
+
+            <label>{{ form.content.label }}</label>
+            {{ form.content(rows=20, class_="script-editor") }}
+            {% if form.content.errors %}<div class="field-error">{{ form.content.errors[0] }}</div>{% endif %}
+
+            <div class="layout-split">
+                <div>
+                    <label>{{ form.scroll_speed.label }} {{ form.scroll_speed(step="0.1") }}</label>
+                    {% if form.scroll_speed.errors %}<div class="field-error">{{ form.scroll_speed.errors[0] }}</div>{% endif %}
+                </div>
+                <div>
+                    <label>{{ form.theme.label }} {{ form.theme() }}</label>
+                    {% if form.theme.errors %}<div class="field-error">{{ form.theme.errors[0] }}</div>{% endif %}
+                </div>
+            </div>
+
+            {{ form.submit(class_="btn primary") }}
+        </form>
+    </div>
+    <aside class="layout-side">
+        <h2>Formatting tips</h2>
+        <ul class="muted">
+            <li>Use double line breaks to create natural pauses.</li>
+            <li>Surround key words with <code>**bold**</code> for emphasis.</li>
+            <li>Use <code>[[ cues ]]</code> to display presenter reminders.</li>
+            <li>Set speed and theme to match your display and lighting.</li>
+        </ul>
+    </aside>
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Scripts · Promptly{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>Your scripts</h1>
+        <p class="muted">Pull from Drive or Nextcloud, or craft something new.</p>
+    </div>
+    <div class="actions">
+        <a class="btn" href="{{ url_for('dashboard.import_script') }}">Import</a>
+        <a class="btn primary" href="{{ url_for('dashboard.create_script') }}">New script</a>
+    </div>
+</section>
+
+<section class="grid">
+    {% for script in scripts %}
+        <article class="card">
+            <header class="card-header">
+                <h2>{{ script.title }}</h2>
+                <span class="badge">{{ script.theme|capitalize }} · ×{{ '%.1f'|format(script.scroll_speed) }}</span>
+            </header>
+            <p class="muted">Updated {{ script.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            <div class="card-actions">
+                <a class="btn" href="{{ url_for('prompter.view', script_id=script.id) }}">Open prompter</a>
+                <a class="btn" href="{{ url_for('dashboard.edit_script', script_id=script.id) }}">Edit</a>
+                <form method="post" action="{{ url_for('dashboard.delete_script', script_id=script.id) }}" onsubmit="return confirm('Delete this script?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn danger" type="submit">Delete</button>
+                </form>
+                <form method="post" action="{{ url_for('dashboard.create_remote_session', script_id=script.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn" type="submit">Remote control</button>
+                </form>
+            </div>
+        </article>
+    {% else %}
+        <p class="empty">No scripts yet. Import or create one to get started.</p>
+    {% endfor %}
+</section>
+{% endblock %}

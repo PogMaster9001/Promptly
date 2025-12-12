@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Remote control · {{ script.title }}{% endblock %}
+{% block head_extra %}
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+{% endblock %}
+{% block content %}
+<section class="remote-shell" data-control-token="{{ token }}">
+    <header class="remote-header">
+        <h1>{{ script.title }}</h1>
+        <p class="muted">Use this page to steer the teleprompter in real time.</p>
+    </header>
+    <div class="remote-buttons">
+        <button class="btn primary" data-action="toggle">Play / Pause</button>
+        <button class="btn" data-action="rewind">Rewind</button>
+    </div>
+    <div class="remote-sliders">
+        <label>Speed ×<input type="range" min="0.2" max="4" step="0.1" value="{{ script.scroll_speed }}" data-channel="speed"></label>
+        <label>Font size<input type="range" min="24" max="120" value="54" data-channel="font-size"></label>
+        <label>Line height<input type="range" min="100" max="250" value="140" data-channel="line-height"></label>
+    </div>
+    <div class="remote-switches">
+        <label class="checkbox"><input type="checkbox" data-channel="mirror"> Mirror</label>
+        <label class="checkbox"><input type="checkbox" data-channel="uppercase"> ALL CAPS</label>
+        <label class="checkbox"><input type="checkbox" data-channel="guidelines"> Guidelines</label>
+        <label class="checkbox"><input type="checkbox" data-channel="theme" value="dark"> Dark mode</label>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/control.js') }}"></script>
+{% endblock %}

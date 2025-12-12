@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Prompter · {{ script.title }}{% endblock %}
+{% block head_extra %}
+<style>
+    body { background: #0d0d0d; color: #f5f5f5; }
+    .top-nav { display: none; }
+    main.container { max-width: none; padding: 0; }
+</style>
+{% endblock %}
+{% block content %}
+<section class="prompter-shell controls-hidden" data-script-id="{{ script.id }}" data-control-token="{{ control_token }}">
+    <button type="button" class="controls-toggle" data-action="controls-toggle" aria-expanded="false" aria-label="Show controls panel">
+        <span class="sr-only">Show controls panel</span>
+        <span class="toggle-arrow"></span>
+    </button>
+    <aside class="prompter-controls">
+        <h2>Display</h2>
+        <label>Font size <input type="range" min="24" max="120" value="54" data-control="font-size"></label>
+        <label>Line height <input type="range" min="100" max="250" value="140" data-control="line-height"></label>
+        <label>Scroll speed ×<input type="number" min="0.2" max="4" step="0.1" value="{{ script.scroll_speed }}" data-control="speed"></label>
+        <label>Theme
+            <select data-control="theme">
+                <option value="light" {% if script.theme == 'light' %}selected{% endif %}>Light</option>
+                <option value="dark" {% if script.theme == 'dark' %}selected{% endif %}>Dark</option>
+                <option value="contrast" {% if script.theme == 'contrast' %}selected{% endif %}>High contrast</option>
+            </select>
+        </label>
+        <label class="checkbox"><input type="checkbox" data-control="mirror"> Mirror display</label>
+        <label class="checkbox"><input type="checkbox" data-control="uppercase"> ALL CAPS</label>
+        <label class="checkbox"><input type="checkbox" data-control="guidelines"> Guidelines</label>
+        <div class="control-buttons">
+            <button class="btn" data-action="rewind">Rewind</button>
+            <button class="btn primary" data-action="toggle">Start</button>
+        </div>
+        {% if control_token %}
+            <p class="muted">Remote token ready. Share: <code>{{ control_token }}</code></p>
+        {% endif %}
+    </aside>
+    <div class="prompter-stage" data-theme="{{ script.theme }}">
+        <div class="prompter-overlay" data-guidelines></div>
+        <article class="prompter-content" data-scroll-speed="{{ script.scroll_speed }}">
+            {{ script.content|teleprompter_markup }}
+        </article>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/prompter.js') }}"></script>
+{% endblock %}

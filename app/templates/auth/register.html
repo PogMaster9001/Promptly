@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Create account · Promptly{% endblock %}
+{% block content %}
+<section class="card auth-card">
+    <h1>Create your workspace</h1>
+    <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <label>{{ form.name.label }} {{ form.name(size=32, autofocus=True) }}</label>
+        {% if form.name.errors %}<div class="field-error">{{ form.name.errors[0] }}</div>{% endif %}
+
+        <label>{{ form.email.label }} {{ form.email(size=32) }}</label>
+        {% if form.email.errors %}<div class="field-error">{{ form.email.errors[0] }}</div>{% endif %}
+
+        <label>{{ form.organization.label }} {{ form.organization(size=32) }}</label>
+        {% if form.organization.errors %}<div class="field-error">{{ form.organization.errors[0] }}</div>{% endif %}
+
+        <label>{{ form.password.label }} {{ form.password(size=32) }}</label>
+        {% if form.password.errors %}<div class="field-error">{{ form.password.errors[0] }}</div>{% endif %}
+
+        <label>{{ form.confirm_password.label }} {{ form.confirm_password(size=32) }}</label>
+        {% if form.confirm_password.errors %}<div class="field-error">{{ form.confirm_password.errors[0] }}</div>{% endif %}
+
+        {{ form.submit(class_="btn primary") }}
+    </form>
+    <p class="muted">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+</section>
+{% endblock %}
